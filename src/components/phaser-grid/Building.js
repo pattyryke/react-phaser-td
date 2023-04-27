@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import BuildingMenu from "../UI/BuildingMenu";
 
 class Building extends Phaser.GameObjects.GameObject {
   constructor(scene, gridX, gridY, posX, posY, texture, width, height) {
@@ -18,6 +19,16 @@ class Building extends Phaser.GameObjects.GameObject {
 
   setInteractive() {
     this.sprite.setInteractive({ useHandCursor: true });
+
+    this.sprite.on("pointerdown", () => {
+      if (this.menu) {
+        this.menu.destroy();
+        this.menu = null;
+      } else {
+        this.menu = new BuildingMenu(this.scene, this.posX, this.posY, this);
+        this.menu.setDepth(1000); // Make sure the menu is above other game objects
+      }
+    });
   }
 
   isOccupied() {

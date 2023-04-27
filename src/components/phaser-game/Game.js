@@ -2,7 +2,7 @@ import Tile from "../phaser-grid/Tile";
 import { createBase } from "./Buildings/Base";
 import { createPortal } from "./Buildings/Portal";
 import { updatePath } from "../phaser-grid/createPath";
-import { gameArea, tileSize } from "./gameConstants";
+import { gameArea } from "./gameConstants";
 
 const createGameGrid = (scene, base, portal) => {
   const tilesHorizontally = gameArea.width;
@@ -13,9 +13,8 @@ const createGameGrid = (scene, base, portal) => {
     const row = [];
 
     for (let x = 0; x < tilesHorizontally; x++) {
-      const posX = (gameArea.startX + x) * tileSize.width + tileSize.width / 2;
-      const posY = y * tileSize.height + tileSize.height / 2;
-      const tile = new Tile(scene, x, y, posX, posY, "emptyTile", tileSize.width, tileSize.height);
+      const tile = new Tile(scene, x, y, "emptyTile");
+
       row.push(tile);
     }
 
@@ -23,15 +22,18 @@ const createGameGrid = (scene, base, portal) => {
   }
 
   // Set the base and portal tiles
-  const baseX = Math.floor(gameArea.width / 2) - gameArea.startX;
+  const middleX = Math.floor(gameArea.width / 2) - gameArea.startX;
   const baseY = gameArea.height - 2;
-  grid[baseY][baseX] = base;
-
   const portalY = 0;
-  grid[portalY][baseX] = portal;
+
+  // Create new Tile objects for base and portal
+  grid[baseY][middleX] = new Tile(scene, middleX, baseY, "emptyTile", base);
+  grid[portalY][middleX] = new Tile(scene, middleX, portalY, "emptyTile", portal);
+
 
   return grid;
 };
+
 
 
 class Game {

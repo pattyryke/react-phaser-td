@@ -1,34 +1,50 @@
+import Phaser from "phaser";
 import { gameArea, tileSize } from "../phaser-game/gameConstants";
 
 export const drawPath = (path, scene) => {
-  path.forEach((tile) => {
-    const { x, y } = tile;
-    const posX = x * tileSize.width + tileSize.width / 2;
-    const posY = y * tileSize.height + tileSize.height / 2;
+  console.log("Drawing path:", path); // Add this line
 
-    const pathRect = scene.add.rectangle(posX, posY, tileSize.width, tileSize.height, 0x00ff00, 0.5);
-    pathRect.setDepth(10); // Make sure the path is above other game objects
+  path.forEach((tile) => {
+    const { gridX, gridY } = tile;
+    const posX = (gridX + gameArea.startX) * tileSize.width + tileSize.width / 2;
+    const posY = gridY * tileSize.height + tileSize.height / 2;
+
+    const pathRect = scene.add.rectangle(posX, posY, tileSize.width, tileSize.height, 0x00ff00, 0.1);
+    pathRect.setDepth(100);
+    pathRect.name = "pathTile";
+    pathRect.isPath = true;
   });
 };
+
 export const clearPath = (scene) => {
   scene.children.each((child) => {
-    if (child.type === "rectangle" && child.fillColor === 0x00ff00) {
+    if (child.isPath === true) {
+      console.log("Destroying", child.type);
       child.destroy();
     }
   });
 };
+
 export const updatePath = (grid, scene) => {
+  //console.log("Updating path...");
+
   clearPath(scene);
 
   const newPath = createPath(grid);
+  //console.log("New path:", newPath); // Add this line
   if (newPath) {
     drawPath(newPath, scene);
   }
 };
 
+
+
 export const createPath = (grid) => {
-  const portalTile = grid[0][Math.floor(gameArea.width / 2) - gameArea.startX];
-  const baseTile = grid[gameArea.height - 2][Math.floor(gameArea.width / 2) - gameArea.startX];
+
+  const baseX = Math.floor(gameArea.width / 2)
+
+  const portalTile = grid[0][baseX];
+  const baseTile = grid[gameArea.height - 2][baseX];
 
   // Dijkstra's algorithm implementation
   const visited = new Set();
@@ -38,17 +54,21 @@ export const createPath = (grid) => {
     queue.sort((a, b) => a.distance - b.distance);
     const current = queue.shift();
     const { tile, distance } = current;
-
+  
+    //console.log("Current tile:", tile, "Distance:", distance); // Add this line
+  
     if (visited.has(tile)) continue;
-
+  
     visited.add(tile);
-
+  
     if (tile === baseTile) {
       return reconstructPath(tile);
     }
-
+  
     const neighbors = getNeighbors(grid, tile);
-
+  
+    //console.log("Neighbors:", neighbors); // Add this line
+  
     for (const neighbor of neighbors) {
       if (!visited.has(neighbor)) {
         const newDistance = distance + 1;
@@ -74,7 +94,7 @@ const reconstructPath = (tile) => {
 
 const getNeighbors = (grid, tile) => {
   const neighbors = [];
-  const { x, y } = tile;
+  const { gridX, gridY } = tile; // Change this line
 
   const directions = [
     { dx: 0, dy: -1 }, // Up
@@ -84,15 +104,15 @@ const getNeighbors = (grid, tile) => {
   ];
 
   for (const { dx, dy } of directions) {
-    const newX = x + dx;
-    const newY = y + dy;
+    const newX = gridX + dx;
+    const newY = gridY + dy;
 
     if (
       newX >= 0 &&
       newX < gameArea.width &&
       newY >= 0 &&
       newY < gameArea.height &&
-      !grid[newY][newX].isOccupied()
+      grid[newY][newX].content === null
     ) {
       neighbors.push(grid[newY][newX]);
     }
@@ -100,3 +120,5 @@ const getNeighbors = (grid, tile) => {
 
   return neighbors;
 };
+
+

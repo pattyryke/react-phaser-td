@@ -1,15 +1,20 @@
+import { gameArea, tileSize } from "../phaser-game/gameConstants";
 
 class Tile {
-  constructor(scene, gridX, gridY, x, y, key, width, height) {
+  constructor(scene, gridX, gridY, key, content) {
     this.scene = scene;
     this.gridX = gridX;
     this.gridY = gridY;
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
-    this.sprite = this.scene.add.sprite(x, y, key);
-    this.sprite.setDisplaySize(width, height);
+    this.width = tileSize.width;
+    this.height = tileSize.height;
+    this.content = content || null;
+
+    // Calculate x and y based on gridX, gridY, and game area offsets
+    this.x = (gridX + gameArea.startX) * tileSize.width;
+    this.y = gridY * tileSize.height;
+
+    this.sprite = this.scene.add.sprite(this.x + this.width / 2, this.y + this.height / 2, key);
+    this.sprite.setDisplaySize(this.width, this.height);
 
     this.sprite.setInteractive();
     this.sprite.on("pointerdown", () => {
@@ -18,11 +23,22 @@ class Tile {
       console.log(`This tiles coordinates: ${this.gridX}, ${this.gridY}`);
       if (createSelectedBuilding) {
         console.log(`Creating building at gridX: ${this.gridX}, gridY: ${this.gridY}`);
-        createSelectedBuilding(this.scene, this.gridX, this.gridY);
-        // Remove the selected building function to avoid placing multiple buildings
-        this.scene.data.set("selectedBuilding", null);
+        const building = createSelectedBuilding(this.scene, this.gridX, this.gridY);
+        
+        // Update the content of the Tile with the created building
+        this.content = building;
+        
+        // Check if the Shift key is not being held down
+        if (!this.scene.shiftKey.isDown) {
+          // Remove the selected building function to avoid placing multiple buildings
+          this.scene.data.set("selectedBuilding", null);
+        }
       }
-    });
+    });    
+  }
+
+  isOccupied() {
+    return this.content !== null;
   }
 }
 
